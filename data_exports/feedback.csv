@@ -1,0 +1,4 @@
+student_id,date,source,structured_sentiment,free_text,language,device_id,captured_at,synced_at,created_by
+6efb55fa-6f90-412e-8a2f-b0d5cd07cffb,2026-09-01T04:16:31.257Z,instructor,negative,Seems completely detached during the workshop recently.,en,d1,2026-09-01T04:16:31.257Z,2026-09-01T04:16:31.257Z,inst_1
+57fab9a1-4ab8-4bea-ae0d-9e0d958987b7,2026-09-01T04:16:31.257Z,instructor,negative,Seems completely detached during the workshop recently.,en,d1,2026-09-01T04:16:31.257Z,2026-09-01T04:16:31.257Z,inst_1
+76aadc38-51e3-4182-b887-8f4237dcafb5,2026-09-01T04:16:31.257Z,instructor,negative,Seems completely detached during the workshop recently.,en,d1,2026-09-01T04:16:31.257Z,2026-09-01T04:16:31.257Z,inst_1
