@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Student {
+  id                    String              @id @default(uuid())
+  name                  String
+  cohort_trade          String
+  enrollment_date       DateTime
+  language_pref         String              @default("en") // "en" | "ta"
+  first_generation_flag Boolean             @default(false)
+  device_tier           String              @default("high") // "low" | "medium" | "high"
+  
+  attendances           Attendance[]
+  practical_activities  PracticalActivity[]
+  assessments           Assessment[]
+  help_seeking          HelpSeeking[]
+  feedbacks             Feedback[]
+  risk_flags            RiskFlag[]
+
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+}
+
+model Attendance {
+  id               String   @id @default(uuid())
+  student_id       String
+  date             DateTime
+  present          Boolean
+  source           String   // "self-report" | "instructor"
+  captured_offline Boolean  @default(false)
+  
+  // Sync/Audit Metadata
+  device_id        String
+  captured_at      DateTime
+  synced_at        DateTime @default(now())
+  created_by       String
+
+  student          Student  @relation(fields: [student_id], references: [id])
+}
+
+model PracticalActivity {
+  id               String   @id @default(uuid())
+  student_id       String
+  date             DateTime
+  task_id          String
+  task_name        String
+  rubric_level     String   // "not_observed" | "developing" | "competent" | "proficient"
+  instructor_id    String
+  notes            String?
+  
+  // Sync/Audit Metadata
+  device_id        String
+  captured_at      DateTime
+  synced_at        DateTime @default(now())
+  created_by       String
+
+  student          Student  @relation(fields: [student_id], references: [id])
+}
+
+model Assessment {
+  id               String   @id @default(uuid())
+  student_id       String
+  date             DateTime
+  assessment_type  String   // "written" | "practical" | "quiz"
+  score            Float
+  max_score        Float
+  
+  // Sync/Audit Metadata
+  device_id        String
+  captured_at      DateTime
+  synced_at        DateTime @default(now())
+  created_by       String
+
+  student          Student  @relation(fields: [student_id], references: [id])
+}
+
+model HelpSeeking {
+  id                   String   @id @default(uuid())
+  student_id           String
+  timestamp            DateTime
+  type                 String   // "tutorial_attendance" | "one_on_one_request" | "peer_help_request"
+  initiated_by_student Boolean
+  
+  // Sync/Audit Metadata
+  device_id            String
+  captured_at          DateTime
+  synced_at            DateTime @default(now())
+  created_by           String
+
+  student              Student  @relation(fields: [student_id], references: [id])
+}
+
+model Feedback {
+  id                   String   @id @default(uuid())
+  student_id           String
+  date                 DateTime
+  source               String   // "instructor" | "self" | "peer"
+  structured_sentiment String   // "positive" | "neutral" | "negative"
+  free_text            String?
+  language             String   // "en" | "ta"
+  
+  // Sync/Audit Metadata
+  device_id            String
+  captured_at          DateTime
+  synced_at            DateTime @default(now())
+  created_by           String
+
+  student              Student  @relation(fields: [student_id], references: [id])
+}
+
+model RiskFlag {
+  id                             String   @id @default(uuid())
+  student_id                     String
+  run_date                       DateTime
+  total_score                    Int
+  risk_band                      String   // "steady" | "watch" | "needs support"
+  confidence_level               String   // "high" | "medium" | "low"
+  per_signal_point_contributions String   // JSON string: { attendance: -2, practicals: +3, assessments: 0, help_seeking: -1, feedback: 0 }
+  model_version                  String   // "baseline" | "scorecard_v1"
+  human_review_status            String   @default("unreviewed") // "unreviewed" | "confirmed" | "false_positive" | "false_negative"
+  reviewer_notes                 String?
+
+  student                        Student  @relation(fields: [student_id], references: [id])
+}
