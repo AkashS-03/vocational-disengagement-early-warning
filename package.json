@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "generate:data": "node scripts/generate_csv.js",
+    "ingest:data": "node scripts/ingest_csv.js",
+    "evaluate:clean": "node scripts/evaluate_models.js",
+    "evaluate:noisy": "node scripts/evaluate_noisy_distribution.js",
+    "test": "node scripts/evaluate_noisy_distribution.js"
   },
   "keywords": [],
   "author": "",

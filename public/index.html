@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Transparent multi-signal early-warning system for identifying student disengagement in vocational institutes using attendance, activity, assessments, help-seeking, and feedback data.">
+    <title>Disengagement Early-Warning System | Vocational Institute</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+
+    <!-- Main Application Header -->
+    <header class="app-header" role="banner">
+        <div class="header-container">
+            <div class="brand">
+                <div class="brand-icon" aria-hidden="true">🛠️</div>
+                <div class="brand-title">
+                    <h1 id="app-title">Vocational Disengagement Early-Warning System</h1>
+                    <p id="app-subtitle">Transparent multi-signal early detection for hands-on technical competencies</p>
+                </div>
+            </div>
+
+            <!-- Global Controls & Status Badges -->
+            <div class="global-controls">
+                <span id="network-status-badge" class="pill-badge badge-online" role="status" aria-live="polite">● Online - Synced</span>
+                <button id="sync-queue-btn" class="btn-ctrl" style="display:none;" aria-label="Sync offline queue">🔄 Sync Queue (0)</button>
+                <button id="offline-sim-btn" class="btn-ctrl" title="Toggle simulation of spotty workshop network">⚡ Simulate Offline</button>
+                <button id="low-bandwidth-btn" class="btn-ctrl" title="Switch to text-only accessible view">Low-Bandwidth Mode</button>
+                <button id="lang-toggle-btn" class="btn-ctrl" aria-label="Toggle language">தமிழ்</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="app-nav" role="navigation" aria-label="Main application sections">
+        <button class="nav-tab active" data-tab="dashboard" id="tab-dashboard" role="tab" aria-selected="true">
+            📊 <span id="tab-dashboard-text">Coordinator Dashboard</span>
+        </button>
+        <button class="nav-tab" data-tab="field-capture" id="tab-field-capture" role="tab" aria-selected="false">
+            📝 <span id="tab-field-text">Instructor Field Log</span>
+        </button>
+        <button class="nav-tab" data-tab="conflicts" id="tab-conflicts" role="tab" aria-selected="false">
+            ⚡ <span id="tab-conflicts-text">Sync Conflicts</span>
+            <span class="tab-badge" id="conflict-count-badge">0</span>
+        </button>
+        <button class="nav-tab" data-tab="comparison" id="tab-comparison" role="tab" aria-selected="false">
+            ⚖️ <span id="tab-comp-text">Model Comparison</span>
+        </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="app-main" id="main-content" role="main">
+
+        <!-- Metrics Overview Bar -->
+        <section class="metrics-grid" aria-label="Cohort metrics summary">
+            <div class="metric-card">
+                <div class="metric-info">
+                    <h3 id="metric-total-label">Total Cohort</h3>
+                    <div class="metric-num" id="metric-total-num">0</div>
+                </div>
+                <div class="metric-icon" aria-hidden="true">👥</div>
+            </div>
+            <div class="metric-card" style="border-left: 4px solid var(--risk-needs-support-border);">
+                <div class="metric-info">
+                    <h3 id="metric-needs-support-label">Needs Support</h3>
+                    <div class="metric-num" id="metric-needs-support-num" style="color:var(--risk-needs-support-text);">0</div>
+                </div>
+                <div class="metric-icon" aria-hidden="true">⚠️</div>
+            </div>
+            <div class="metric-card" style="border-left: 4px solid var(--risk-watch-border);">
+                <div class="metric-info">
+                    <h3 id="metric-watch-label">Watch Band</h3>
+                    <div class="metric-num" id="metric-watch-num" style="color:var(--risk-watch-text);">0</div>
+                </div>
+                <div class="metric-icon" aria-hidden="true">👁️</div>
+            </div>
+            <div class="metric-card" style="border-left: 4px solid var(--risk-steady-border);">
+                <div class="metric-info">
+                    <h3 id="metric-steady-label">Steady Progress</h3>
+                    <div class="metric-num" id="metric-steady-num" style="color:var(--risk-steady-text);">0</div>
+                </div>
+                <div class="metric-icon" aria-hidden="true">✅</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-info">
+                    <h3 id="metric-conflicts-label">Active Conflicts</h3>
+                    <div class="metric-num" id="metric-conflicts-num" style="color:#fcd34d;">0</div>
+                </div>
+                <div class="metric-icon" aria-hidden="true">⚡</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-info">
+                    <h3 id="metric-recall-label">Recall Improvement</h3>
+                    <div class="metric-num" id="metric-recall-num" style="color:#6ee7b7;">+100%</div>
+                </div>
+                <div class="metric-icon" aria-hidden="true">📈</div>
+            </div>
+        </section>
+
+        <!-- VIEW 1: COORDINATOR DASHBOARD -->
+        <section id="view-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
+            <!-- Search & Filter Controls -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <input type="text" id="search-input" class="search-input" placeholder="Search student by name or trade..." aria-label="Search student">
+                    <select id="trade-filter" class="select-filter" aria-label="Filter by vocational trade">
+                        <option value="all">All Trades</option>
+                        <option value="electrical">Electrical</option>
+                        <option value="welding">Welding</option>
+                        <option value="automotive">Automotive</option>
+                        <option value="it_hardware">IT Hardware</option>
+                    </select>
+                    <select id="risk-filter" class="select-filter" aria-label="Filter by risk band">
+                        <option value="all">All Risk Bands</option>
+                        <option value="needs support">Needs Support (≤ -1)</option>
+                        <option value="watch">Watch (-1 to 0)</option>
+                        <option value="steady">Steady (≥ +1)</option>
+                    </select>
+                    <select id="conf-filter" class="select-filter" aria-label="Filter by confidence level">
+                        <option value="all">All Confidence Levels</option>
+                        <option value="high">High Confidence</option>
+                        <option value="medium">Medium Confidence</option>
+                        <option value="low">Low Confidence (Sparse Data)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Student Data Table -->
+            <div class="table-container">
+                <table class="data-table" aria-label="Students risk scorecard roster">
+                    <thead>
+                        <tr>
+                            <th scope="col">Student & Trade</th>
+                            <th scope="col">Attendance</th>
+                            <th scope="col">Practical Rubrics</th>
+                            <th scope="col">Exam Avg</th>
+                            <th scope="col">Transparent Signal Points</th>
+                            <th scope="col">Risk Band</th>
+                            <th scope="col">Confidence</th>
+                            <th scope="col">Human Review</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-table-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- VIEW 2: INSTRUCTOR FIELD DATA CAPTURE -->
+        <section id="view-field-capture" style="display:none;" role="tabpanel" aria-labelledby="tab-field-capture">
+            <div class="field-capture-form">
+                <div style="margin-bottom:1.5rem; text-align:center;">
+                    <h2 id="field-title" style="font-size:1.35rem; font-weight:700;">Instructor Workshop Data Capture (Offline-First)</h2>
+                    <p id="field-subtitle" style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.3rem;">
+                        Log attendance and hands-on practical competency rubrics in workshop sheds without internet
+                    </p>
+                </div>
+
+                <form id="field-form">
+                    <div class="form-group">
+                        <label for="field-student-select" class="form-label" id="field-student-label">Select Student:</label>
+                        <select id="field-student-select" class="form-select" required aria-required="true">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="field-date-input" class="form-label" id="field-date-label">Observation Date:</label>
+                        <input type="date" id="field-date-input" class="form-input" required aria-required="true">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" id="field-att-label">Daily Attendance:</label>
+                        <div style="display:flex; gap:1.5rem; margin-top:0.3rem;">
+                            <label style="cursor:pointer; display:flex; align-items:center; gap:0.4rem;">
+                                <input type="radio" name="attendance" id="field-att-present" value="true" checked>
+                                <span id="field-present-text">Present in Workshop</span>
+                            </label>
+                            <label style="cursor:pointer; display:flex; align-items:center; gap:0.4rem;">
+                                <input type="radio" name="attendance" id="field-att-absent" value="false">
+                                <span id="field-absent-text">Absent</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="field-task-input" class="form-label" id="field-task-label">Practical Competency Task:</label>
+                        <input type="text" id="field-task-input" class="form-input" placeholder="e.g., MIG welding joint, Circuit wiring, Brake pad inspection" value="MIG welding joint">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" id="field-rubric-label">Competency Level Observed:</label>
+                        <div class="rubric-selector" role="radiogroup" aria-label="Vocational Rubric Level">
+                            <button type="button" class="rubric-btn" data-rubric="not_observed">
+                                ⚪ Not Observed (0)
+                            </button>
+                            <button type="button" class="rubric-btn" data-rubric="developing">
+                                🟡 Developing (-2)
+                            </button>
+                            <button type="button" class="rubric-btn selected" data-rubric="competent">
+                                🟢 Competent (+2)
+                            </button>
+                            <button type="button" class="rubric-btn" data-rubric="proficient">
+                                ⭐ Proficient (+2)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="field-notes-input" class="form-label" id="field-notes-label">Instructor Notes & Feedback:</label>
+                        <textarea id="field-notes-input" class="form-textarea" rows="3" placeholder="Enter practical observations, safety compliance, or behavioral notes (supports English or Tamil)..."></textarea>
+                    </div>
+
+                    <button type="submit" id="field-submit-btn" class="btn-primary" style="width:100%; justify-content:center; padding:0.75rem; font-size:0.95rem;">
+                        📥 Save to Field Log
+                    </button>
+                    <p id="field-offline-notice" style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:0.75rem;">
+                        Records will be safely stored in local IndexedDB and synced when connection resumes.
+                    </p>
+                </form>
+            </div>
+        </section>
+
+        <!-- VIEW 3: SYNC CONFLICT RESOLUTION CENTER -->
+        <section id="view-conflicts" style="display:none;" role="tabpanel" aria-labelledby="tab-conflicts">
+            <div style="margin-bottom:1.5rem;">
+                <h2 id="conflicts-title" style="font-size:1.35rem; font-weight:700;">Sync Conflict Resolution Center</h2>
+                <p id="conflicts-subtitle" style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.2rem;">
+                    Concurrent offline logs detected from multiple instructor devices on the same day
+                </p>
+            </div>
+
+            <div id="conflicts-container">
+                <!-- Populated dynamically -->
+            </div>
+        </section>
+
+        <!-- VIEW 4: MODEL COMPARISON (BEFORE & AFTER) -->
+        <section id="view-comparison" style="display:none;" role="tabpanel" aria-labelledby="tab-comparison">
+            <div style="margin-bottom:1.5rem;">
+                <h2 id="comp-title" style="font-size:1.35rem; font-weight:700;">Model Comparison: Naive Baseline vs. Multi-Signal Scorecard</h2>
+                <p id="comp-subtitle" style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.2rem;">
+                    Evaluating why early disengagement is hidden behind attendance or exam marks alone
+                </p>
+            </div>
+
+            <!-- Side-by-Side Comparison Table -->
+            <div class="table-container">
+                <table class="data-table" aria-label="Before-and-after model comparison table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Student</th>
+                            <th scope="col">Attendance %</th>
+                            <th scope="col">Baseline Model (Attendance &lt; 75%)</th>
+                            <th scope="col">Scorecard Model (5 Signals)</th>
+                            <th scope="col">Outcome & Analysis</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparison-table-body">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Student Detail & Human Review Drawer (Modal) -->
+    <div id="student-drawer" class="drawer-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="drawer-student-name">
+        <div class="drawer-content">
+            <div class="drawer-header">
+                <div>
+                    <h2 id="drawer-student-name" style="font-size:1.35rem; font-weight:700;">Student Name</h2>
+                    <p id="drawer-student-sub" style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.2rem;">Details</p>
+                </div>
+                <button id="drawer-close-btn" class="drawer-close" aria-label="Close details drawer">✕</button>
+            </div>
+
+            <!-- Signal Breakdown Cards -->
+            <div class="detail-card">
+                <h4 id="drawer-sig-att">Attendance Signal (<span id="sc-att-points" style="font-weight:700;">0</span> pts)</h4>
+                <p id="sc-att-desc" style="font-size:0.85rem; color:var(--text-secondary);"></p>
+            </div>
+
+            <div class="detail-card">
+                <h4 id="drawer-sig-prac">Hands-on Practical Rubric (<span id="sc-prac-points" style="font-weight:700;">0</span> pts)</h4>
+                <p id="sc-prac-desc" style="font-size:0.85rem; color:var(--text-secondary);"></p>
+            </div>
+
+            <div class="detail-card">
+                <h4 id="drawer-sig-exam">Coursework & Exams (<span id="sc-exam-points" style="font-weight:700;">0</span> pts)</h4>
+                <p id="sc-exam-desc" style="font-size:0.85rem; color:var(--text-secondary);"></p>
+            </div>
+
+            <div class="detail-card">
+                <h4 id="drawer-sig-feed">Instructor Feedback (<span id="sc-feed-points" style="font-weight:700;">0</span> pts)</h4>
+                <p id="sc-feed-desc" style="font-size:0.85rem; color:var(--text-secondary);"></p>
+            </div>
+
+            <div class="detail-card" style="border:1px solid var(--accent-primary); background:rgba(79, 70, 229, 0.1);">
+                <h4 style="color:#ffffff;">Final Scorecard Result</h4>
+                <div id="sc-total-score" style="font-size:1.15rem; font-weight:800; color:#ffffff; margin-top:0.3rem;">Total: 0</div>
+            </div>
+
+            <!-- Human-in-the-Loop Review Section -->
+            <div class="detail-card" style="border-top:2px solid var(--accent-primary);">
+                <h4 id="drawer-review-head">Human-in-the-Loop Review</h4>
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.85rem;">
+                    Confirm or correct model prediction to improve institutional intervention fidelity.
+                </p>
+
+                <div class="form-group">
+                    <label for="review-status-select" class="form-label">Reviewer Verification Status:</label>
+                    <select id="review-status-select" class="form-select">
+                        <option value="unreviewed">Unreviewed</option>
+                        <option value="confirmed">Confirmed (Valid Early Warning)</option>
+                        <option value="false_positive">False Positive (Engaged / External Factor)</option>
+                        <option value="false_negative">False Negative (Missed Disengagement)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewer-notes-input" class="form-label">Coordinator Qualitative Notes:</label>
+                    <textarea id="reviewer-notes-input" class="form-textarea" rows="3" placeholder="Record interview notes, reason for false positive, or support action taken..."></textarea>
+                </div>
+
+                <button id="drawer-save-review-btn" class="btn-primary" style="width:100%; justify-content:center;">
+                    💾 Save Review Status
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/indexeddb.js"></script>
+    <script src="/app.js"></script>
+</body>
+</html>
