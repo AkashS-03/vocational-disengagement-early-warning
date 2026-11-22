@@ -77,6 +77,8 @@ The system was evaluated against a **Naive Baseline Model** (`Attendance < 75% A
 
 | Deliverable File | Description |
 | :--- | :--- |
+| [`docs/100_percent_final_completion_report.md`](file:///d:/CAT_Project/vocational-disengagement-early-warning/docs/100_percent_final_completion_report.md) | **100% Final Project Completion Report**, accreditation defense, longitudinal findings, and EEOC fairness audit. |
+| [`docs/75_percent_completion_report.md`](file:///d:/CAT_Project/vocational-disengagement-early-warning/docs/75_percent_completion_report.md) | 75% milestone report resolving all initial reviewer improvement areas. |
 | [`docs/architecture.md`](file:///d:/CAT_Project/vocational-disengagement-early-warning/docs/architecture.md) | High-level system architecture, component diagrams, and sync conflict lifecycle. |
 | [`docs/data_schema.md`](file:///d:/CAT_Project/vocational-disengagement-early-warning/docs/data_schema.md) | Relational schema definitions for all 7 entities with offline synchronization metadata. |
 | [`docs/stakeholder_assumptions.md`](file:///d:/CAT_Project/vocational-disengagement-early-warning/docs/stakeholder_assumptions.md) | Core user roles, ethical non-negotiables ("What this is not"), and institutional guardrails. |
@@ -90,7 +92,7 @@ The system was evaluated against a **Naive Baseline Model** (`Attendance < 75% A
 ## 🚀 Quickstart & Reproduction
 
 ### Prerequisites
-- Node.js `v18+` (Tested on `v24.19.0`)
+- Node.js `v18+` (Tested on `v24.19.0`) or Docker
 
 ### 1. Install & Setup
 ```bash
@@ -102,19 +104,19 @@ cd vocational-disengagement-early-warning
 npm install
 ```
 
-### 2. Run Data Pipeline & Evaluation
+### 2. Automated Test Suite & Benchmarks
 ```bash
-# Generate synthetic dataset with 5 realistic vocational edge cases
-npm run generate:data
+# Run comprehensive automated test suite (15/15 unit, API, and benchmark tests)
+npm run test:all
 
-# Ingest data into SQLite database
-npm run ingest:data
-
-# Run clean evaluation experiment
-npm run evaluate:clean
+# Run 12-week longitudinal field pilot simulation (Lead-time and EEOC fairness audit)
+npm run pilot
 
 # Run noisy distribution robustness benchmark (N=200, 15% noise)
 npm run evaluate:noisy
+
+# Run clean evaluation experiment (N=46)
+npm run evaluate:clean
 ```
 
 ### 3. Launch Web Application MVP
@@ -127,4 +129,11 @@ Open **[http://localhost:3000](http://localhost:3000)** in your browser to acces
 - **Instructor Field Log** with mobile layout and IndexedDB offline queuing.
 - **Sync Conflict Resolution Center** for manual review and merge of concurrent entries.
 - **Model Comparison View** highlighting quiet disengagement detection vs. baseline.
+- **LMS Ingestion Modal** for direct Moodle / Canvas CSV gradebook uploads.
+- **Cohort CSV Export** for institutional reporting.
 - **Bilingual Switcher** (`EN` / `தமிழ்`) and **Low-Bandwidth Mode**.
+
+### 4. Docker Deployment (Institutional Production)
+```bash
+docker compose up -d --build
+```

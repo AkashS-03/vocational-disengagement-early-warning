@@ -32,7 +32,7 @@ export async function processSyncQueue(records: SyncRecord[]): Promise<SyncResul
     let syncedCount = 0;
     let conflictsDetected = 0;
     const conflicts: any[] = [];
-    const errors: string[];
+    const errors: string[] = [];
 
     for (const item of records) {
         try {

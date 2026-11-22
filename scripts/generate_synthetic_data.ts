@@ -1,7 +1,23 @@
-import { PrismaClient } from '@prisma/client';
-import { addDays, subDays, startOfDay } from 'date-fns';
+import { prisma } from '../src/lib/db';
 
-const prisma = new PrismaClient();
+const addDays = (date: Date, days: number): Date => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+};
+
+const subDays = (date: Date, days: number): Date => {
+  const result = new Date(date);
+  result.setDate(result.getDate() - days);
+  return result;
+};
+
+const startOfDay = (date: Date): Date => {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  return result;
+};
+
 
 const trades = ['electrical', 'welding', 'automotive', 'it_hardware'];
 const languages = ['en', 'ta'];

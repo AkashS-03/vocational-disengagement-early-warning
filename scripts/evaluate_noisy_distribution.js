@@ -263,6 +263,21 @@ function runNoisyBenchmark() {
         console.log(`\n>>> RESULT: TARGET NOT MET <<<`);
     }
     console.log("================================================================================\n");
+
+    return {
+        targetAchieved: meetsTarget,
+        recallImprovement: parseFloat(recallDiff),
+        scorecardPrecision: parseFloat(sMetrics.precision),
+        baselineMetrics: bMetrics,
+        scorecardMetrics: sMetrics
+    };
 }
 
-runNoisyBenchmark();
+if (require.main === module) {
+    runNoisyBenchmark();
+}
+
+module.exports = {
+    runNoisyBenchmark,
+    runNoisyEvaluation: runNoisyBenchmark
+};

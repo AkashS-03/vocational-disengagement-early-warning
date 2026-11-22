@@ -14,20 +14,38 @@
     <header class="app-header" role="banner">
         <div class="header-container">
             <div class="brand">
-                <div class="brand-icon" aria-hidden="true">🛠️</div>
+                <div class="brand-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                    </svg>
+                </div>
                 <div class="brand-title">
-                    <h1 id="app-title">Vocational Disengagement Early-Warning System</h1>
-                    <p id="app-subtitle">Transparent multi-signal early detection for hands-on technical competencies</p>
+                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                        <h1 id="app-title">Vocational Early-Warning System</h1>
+                        <span class="brand-version">v1.2</span>
+                    </div>
+                    <p id="app-subtitle">Transparent multi-signal early detection for technical & vocational competencies</p>
                 </div>
             </div>
 
             <!-- Global Controls & Status Badges -->
             <div class="global-controls">
-                <span id="network-status-badge" class="pill-badge badge-online" role="status" aria-live="polite">● Online - Synced</span>
-                <button id="sync-queue-btn" class="btn-ctrl" style="display:none;" aria-label="Sync offline queue">🔄 Sync Queue (0)</button>
-                <button id="offline-sim-btn" class="btn-ctrl" title="Toggle simulation of spotty workshop network">⚡ Simulate Offline</button>
-                <button id="low-bandwidth-btn" class="btn-ctrl" title="Switch to text-only accessible view">Low-Bandwidth Mode</button>
-                <button id="lang-toggle-btn" class="btn-ctrl" aria-label="Toggle language">தமிழ்</button>
+                <span id="network-status-badge" class="pill-badge badge-online" role="status" aria-live="polite">
+                    <span class="pulsing-dot"></span>
+                    <span id="network-status-text">Online - Synced</span>
+                </span>
+                <button id="sync-queue-btn" class="btn-ctrl btn-accent" style="display:none;" aria-label="Sync offline queue">
+                    🔄 <span id="sync-queue-text">Sync Queue (0)</span>
+                </button>
+                <button id="offline-sim-btn" class="btn-ctrl" title="Toggle simulation of spotty workshop network">
+                    ⚡ <span id="offline-sim-text">Simulate Offline</span>
+                </button>
+                <button id="low-bandwidth-btn" class="btn-ctrl" title="Switch to text-only accessible view">
+                    📶 <span id="low-bandwidth-text">Low-Bandwidth</span>
+                </button>
+                <button id="lang-toggle-btn" class="btn-ctrl btn-lang" aria-label="Toggle language">
+                    🌐 <span id="lang-toggle-text">தமிழ்</span>
+                </button>
             </div>
         </div>
     </header>
@@ -52,77 +70,122 @@
     <!-- Main Content Area -->
     <main class="app-main" id="main-content" role="main">
 
-        <!-- Metrics Overview Bar -->
-        <section class="metrics-grid" aria-label="Cohort metrics summary">
-            <div class="metric-card">
-                <div class="metric-info">
-                    <h3 id="metric-total-label">Total Cohort</h3>
-                    <div class="metric-num" id="metric-total-num">0</div>
+        <!-- Streamlined Metrics & Cohort Health Bar -->
+        <section class="metrics-section" aria-label="Cohort metrics summary">
+            <div class="metrics-grid">
+                <div class="metric-card metric-total">
+                    <div class="metric-icon-wrap" aria-hidden="true">👥</div>
+                    <div class="metric-info">
+                        <span class="metric-label" id="metric-total-label">Total Cohort</span>
+                        <div class="metric-num" id="metric-total-num">0</div>
+                        <span class="metric-subtext">Active Enrolled</span>
+                    </div>
                 </div>
-                <div class="metric-icon" aria-hidden="true">👥</div>
+                <div class="metric-card metric-needs-support">
+                    <div class="metric-icon-wrap" aria-hidden="true">⚠️</div>
+                    <div class="metric-info">
+                        <span class="metric-label" id="metric-needs-support-label">Needs Support</span>
+                        <div class="metric-num" id="metric-needs-support-num">0</div>
+                        <span class="metric-subtext" id="metric-needs-support-pct">Urgent Intervention</span>
+                    </div>
+                </div>
+                <div class="metric-card metric-watch">
+                    <div class="metric-icon-wrap" aria-hidden="true">👁️</div>
+                    <div class="metric-info">
+                        <span class="metric-label" id="metric-watch-label">Watch Band</span>
+                        <div class="metric-num" id="metric-watch-num">0</div>
+                        <span class="metric-subtext" id="metric-watch-pct">Early Monitoring</span>
+                    </div>
+                </div>
+                <div class="metric-card metric-steady">
+                    <div class="metric-icon-wrap" aria-hidden="true">✅</div>
+                    <div class="metric-info">
+                        <span class="metric-label" id="metric-steady-label">Steady Progress</span>
+                        <div class="metric-num" id="metric-steady-num">0</div>
+                        <span class="metric-subtext" id="metric-steady-pct">On Track</span>
+                    </div>
+                </div>
             </div>
-            <div class="metric-card" style="border-left: 4px solid var(--risk-needs-support-border);">
-                <div class="metric-info">
-                    <h3 id="metric-needs-support-label">Needs Support</h3>
-                    <div class="metric-num" id="metric-needs-support-num" style="color:var(--risk-needs-support-text);">0</div>
+
+            <!-- Cohort Risk Distribution Progress Bar -->
+            <div class="cohort-distribution-card">
+                <div class="cohort-dist-header">
+                    <span class="dist-title" id="dist-title-text">Cohort Risk Distribution</span>
+                    <div class="dist-legend">
+                        <span class="legend-item"><span class="legend-dot dot-support"></span><span id="legend-support-text">Needs Support</span> (<span id="dist-pct-support">0%</span>)</span>
+                        <span class="legend-item"><span class="legend-dot dot-watch"></span><span id="legend-watch-text">Watch</span> (<span id="dist-pct-watch">0%</span>)</span>
+                        <span class="legend-item"><span class="legend-dot dot-steady"></span><span id="legend-steady-text">Steady</span> (<span id="dist-pct-steady">100%</span>)</span>
+                    </div>
                 </div>
-                <div class="metric-icon" aria-hidden="true">⚠️</div>
-            </div>
-            <div class="metric-card" style="border-left: 4px solid var(--risk-watch-border);">
-                <div class="metric-info">
-                    <h3 id="metric-watch-label">Watch Band</h3>
-                    <div class="metric-num" id="metric-watch-num" style="color:var(--risk-watch-text);">0</div>
+                <div class="cohort-dist-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Risk breakdown distribution">
+                    <div id="dist-bar-support" class="dist-seg seg-support" style="width: 1%;" title="Needs Support"></div>
+                    <div id="dist-bar-watch" class="dist-seg seg-watch" style="width: 1%;" title="Watch Band"></div>
+                    <div id="dist-bar-steady" class="dist-seg seg-steady" style="width: 98%;" title="Steady Progress"></div>
                 </div>
-                <div class="metric-icon" aria-hidden="true">👁️</div>
-            </div>
-            <div class="metric-card" style="border-left: 4px solid var(--risk-steady-border);">
-                <div class="metric-info">
-                    <h3 id="metric-steady-label">Steady Progress</h3>
-                    <div class="metric-num" id="metric-steady-num" style="color:var(--risk-steady-text);">0</div>
-                </div>
-                <div class="metric-icon" aria-hidden="true">✅</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-info">
-                    <h3 id="metric-conflicts-label">Active Conflicts</h3>
-                    <div class="metric-num" id="metric-conflicts-num" style="color:#fcd34d;">0</div>
-                </div>
-                <div class="metric-icon" aria-hidden="true">⚡</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-info">
-                    <h3 id="metric-recall-label">Recall Improvement</h3>
-                    <div class="metric-num" id="metric-recall-num" style="color:#6ee7b7;">+100%</div>
-                </div>
-                <div class="metric-icon" aria-hidden="true">📈</div>
             </div>
         </section>
 
         <!-- VIEW 1: COORDINATOR DASHBOARD -->
         <section id="view-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
-            <!-- Search & Filter Controls -->
+            <!-- Modern Search & Filter Controls -->
             <div class="filter-bar">
-                <div class="filter-group">
+                <div class="search-box">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
                     <input type="text" id="search-input" class="search-input" placeholder="Search student by name or trade..." aria-label="Search student">
+                </div>
+
+                <!-- Quick Segmented Risk Filter Chips -->
+                <div class="risk-chips-group" id="risk-chips" role="radiogroup" aria-label="Filter by Risk Band">
+                    <button type="button" class="risk-chip active" data-risk="all">All</button>
+                    <button type="button" class="risk-chip chip-needs-support" data-risk="needs support">⚠️ Needs Support</button>
+                    <button type="button" class="risk-chip chip-watch" data-risk="watch">👁️ Watch</button>
+                    <button type="button" class="risk-chip chip-steady" data-risk="steady">✅ Steady</button>
+                </div>
+
+                <!-- Secondary Filter Selects -->
+                <div class="filter-selects">
                     <select id="trade-filter" class="select-filter" aria-label="Filter by vocational trade">
                         <option value="all">All Trades</option>
-                        <option value="electrical">Electrical</option>
-                        <option value="welding">Welding</option>
-                        <option value="automotive">Automotive</option>
-                        <option value="it_hardware">IT Hardware</option>
+                        <option value="electrical">⚡ Electrical</option>
+                        <option value="welding">🔥 Welding</option>
+                        <option value="automotive">🚗 Automotive</option>
+                        <option value="it_hardware">💻 IT Hardware</option>
                     </select>
-                    <select id="risk-filter" class="select-filter" aria-label="Filter by risk band">
+                    <select id="risk-filter" class="select-filter" style="display:none;" aria-label="Filter by risk band">
                         <option value="all">All Risk Bands</option>
                         <option value="needs support">Needs Support (≤ -1)</option>
                         <option value="watch">Watch (-1 to 0)</option>
                         <option value="steady">Steady (≥ +1)</option>
                     </select>
                     <select id="conf-filter" class="select-filter" aria-label="Filter by confidence level">
-                        <option value="all">All Confidence Levels</option>
+                        <option value="all">All Confidence</option>
                         <option value="high">High Confidence</option>
                         <option value="medium">Medium Confidence</option>
-                        <option value="low">Low Confidence (Sparse Data)</option>
+                        <option value="low">Low (Sparse Data)</option>
                     </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="filter-actions">
+                    <a href="/api/export/cohort" class="btn-ctrl btn-export" download title="Download full risk scorecard data in CSV format">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span id="export-csv-text">Export CSV</span>
+                    </a>
+                    <button id="lms-modal-btn" class="btn-ctrl btn-lms" title="Ingest external Moodle/Canvas CSV gradebook or attendance">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        <span id="lms-import-text">LMS Ingestion</span>
+                    </button>
                 </div>
             </div>
 
@@ -328,6 +391,44 @@
 
                 <button id="drawer-save-review-btn" class="btn-primary" style="width:100%; justify-content:center;">
                     💾 Save Review Status
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LMS Ingestion Modal -->
+    <div id="lms-modal" class="drawer-backdrop" style="display:none; justify-content:center; align-items:center;">
+        <div class="drawer-content" style="max-width:560px; height:auto; max-height:90vh; border-radius:12px; border:1px solid var(--border-color); box-shadow:0 20px 40px rgba(0,0,0,0.6); animation:none;">
+            <div class="drawer-header">
+                <div>
+                    <h3 id="lms-modal-title" style="font-size:1.25rem; font-weight:700;">🔄 LMS & External SIS Ingestion</h3>
+                    <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.25rem;">Directly import gradebook exams or attendance logs from Moodle / Canvas</p>
+                </div>
+                <button id="lms-close-btn" class="drawer-close" aria-label="Close modal">&times;</button>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:1rem; margin-top:1rem;">
+                <div class="form-group">
+                    <label for="lms-platform-select" class="form-label">Platform Source:</label>
+                    <select id="lms-platform-select" class="form-select">
+                        <option value="moodle">Moodle LMS (Gradebook CSV)</option>
+                        <option value="canvas">Canvas LMS (SIS Export)</option>
+                        <option value="generic">Generic Biometric / Roll-Call CSV</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                        <label for="lms-csv-input" class="form-label" style="margin-bottom:0;">CSV Data:</label>
+                        <button type="button" id="lms-sample-btn" style="background:none; border:none; color:var(--accent-primary); font-size:0.75rem; cursor:pointer; text-decoration:underline;">Load Sample Data</button>
+                    </div>
+                    <textarea id="lms-csv-input" class="form-textarea" rows="6" placeholder="student_name,score,max_score,assessment_type&#10;Student False_Baseline_Positive 1831,85,100,midterm_exam&#10;Student Consistent_Engaged 2741,92,100,midterm_exam"></textarea>
+                </div>
+
+                <div id="lms-status-msg" style="display:none; padding:0.6rem; border-radius:6px; font-size:0.85rem;"></div>
+
+                <button id="lms-submit-btn" class="btn-primary" style="justify-content:center; padding:0.65rem;">
+                    🚀 Ingest & Update Scorecards
                 </button>
             </div>
         </div>

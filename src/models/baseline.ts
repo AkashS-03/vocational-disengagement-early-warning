@@ -2,7 +2,7 @@
  * Baseline Model
  * Naive rule: "Flag if attendance < 75%"
  */
-export async function evaluateBaseline(studentId, db) {
+export async function evaluateBaseline(studentId: string, db: any) {
     // 1. Calculate Attendance %
     const attendances = await db.all(`SELECT present FROM Attendance WHERE student_id = ?`, [studentId]);
     

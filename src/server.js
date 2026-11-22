@@ -422,6 +422,127 @@ app.get('/api/metrics', async (c) => {
     }
 });
 
+// 9. LMS / SIS External Ingestion Connector & Webhook
+const { parseCSV, ingestLmsBatch } = require('./lib/lms_connector');
+
+app.post('/api/lms/import', async (c) => {
+    try {
+        const contentType = c.req.header('content-type') || '';
+        let records = [];
+        let sourcePlatform = 'moodle';
+
+        if (contentType.includes('application/json')) {
+            const body = await c.req.json();
+            records = Array.isArray(body) ? body : (body.records || []);
+            sourcePlatform = body.sourcePlatform || 'moodle';
+        } else {
+            // Treat as raw CSV
+            const rawText = await c.req.text();
+            records = parseCSV(rawText);
+        }
+
+        if (!records || records.length === 0) {
+            return c.json({ success: false, error: 'No valid records parsed from payload' }, 400);
+        }
+
+        const result = await ingestLmsBatch(records, { queryRun, queryGet, queryAll }, sourcePlatform);
+        return c.json({
+            success: true,
+            ...result,
+            message: `Successfully processed ${result.totalImported} LMS record(s) from ${sourcePlatform}.`
+        });
+    } catch (err) {
+        console.error('LMS import failed:', err);
+        return c.json({ success: false, error: err.message }, 500);
+    }
+});
+
+app.post('/api/lms/webhook', async (c) => {
+    try {
+        const body = await c.req.json();
+        const { event, student_id, score, max_score, present, date, source } = body;
+        
+        const record = {
+            student_id,
+            score,
+            max_score,
+            present,
+            date: date || new Date().toISOString()
+        };
+
+        const result = await ingestLmsBatch([record], { queryRun, queryGet, queryAll }, source || 'webhook');
+        return c.json({ success: true, event, result });
+    } catch (err) {
+        console.error('LMS webhook error:', err);
+        return c.json({ success: false, error: err.message }, 500);
+    }
+});
+
+// 10. Cohort Data Export (CSV)
+app.get('/api/export/cohort', async (c) => {
+    try {
+        const students = await queryAll(`SELECT * FROM Student ORDER BY cohort_trade ASC, name ASC`);
+        const rows = [
+            [
+                'Student ID',
+                'Name',
+                'Trade',
+                'Language',
+                'First Gen',
+                'Attendance %',
+                'Exam Avg %',
+                'Attendance Points',
+                'Practicals Points',
+                'Assessment Points',
+                'Feedback Points',
+                'Help Seeking Points',
+                'Total Score',
+                'Risk Band',
+                'Confidence',
+                'Human Review Status',
+                'Reviewer Notes'
+            ].join(',')
+        ];
+
+        for (const s of students) {
+            const scoreData = await calculateStudentScores(s.id);
+            const r = [
+                `"${s.id}"`,
+                `"${s.name.replace(/"/g, '""')}"`,
+                `"${s.cohort_trade}"`,
+                `"${s.language_pref}"`,
+                s.first_generation_flag ? 'Yes' : 'No',
+                `${scoreData.stats ? scoreData.stats.attendancePercent : 0}%`,
+                `${scoreData.stats ? scoreData.stats.examAverage : 0}%`,
+                scoreData.points.attendance,
+                scoreData.points.practicals,
+                scoreData.points.assessments,
+                scoreData.points.feedback,
+                scoreData.points.help_seeking,
+                scoreData.totalScore,
+                `"${scoreData.riskBand}"`,
+                `"${scoreData.confidence}"`,
+                `"${scoreData.humanReview.status}"`,
+                `"${(scoreData.humanReview.notes || '').replace(/"/g, '""')}"`
+            ];
+            rows.push(r.join(','));
+        }
+
+        const csvContent = rows.join('\r\n');
+        return new Response(csvContent, {
+            status: 200,
+            headers: {
+                'Content-Type': 'text/csv; charset=utf-8',
+                'Content-Disposition': 'attachment; filename="vocational_cohort_risk_export.csv"'
+            }
+        });
+    } catch (err) {
+        console.error('Export failed:', err);
+        return c.json({ success: false, error: err.message }, 500);
+    }
+});
+
+
 // -------------------------------------------------------------
 // Serve Frontend Static Files
 // -------------------------------------------------------------

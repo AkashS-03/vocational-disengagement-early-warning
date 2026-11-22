@@ -3,7 +3,7 @@
  * Transparent, additive point-based system across 5 signal families.
  */
 
-export async function evaluateScorecard(studentId, db) {
+export async function evaluateScorecard(studentId: string, db: any) {
     const points = { attendance: 0, practicals: 0, assessments: 0, help_seeking: 0, feedback: 0 };
     let signalsPresent = 0;
 

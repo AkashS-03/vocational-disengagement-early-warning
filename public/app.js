@@ -57,6 +57,8 @@ const i18n = {
         colReview: "Human Review",
         colAction: "Action",
         inspectBtn: "Inspect",
+        exportCsv: "Export CSV",
+        lmsIngestion: "LMS Ingestion",
 
         // Drawer
         drawerTitle: "Student Risk Scorecard Details",
@@ -159,6 +161,8 @@ const i18n = {
         colReview: "மனித சரிபார்ப்பு",
         colAction: "செயல்",
         inspectBtn: "ஆராய்க",
+        exportCsv: "CSV ஏற்றுமதி",
+        lmsIngestion: "LMS தரவேற்றம்",
 
         // Drawer
         drawerTitle: "மாணவர் இடர் மதிப்பீட்டு விவரங்கள்",
@@ -295,6 +299,18 @@ function setupEventListeners() {
     $('risk-filter').addEventListener('change', applyFilters);
     $('conf-filter').addEventListener('change', applyFilters);
 
+    // Segmented Risk Filter Chips
+    document.querySelectorAll('.risk-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('.risk-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            if ($('risk-filter')) {
+                $('risk-filter').value = chip.dataset.risk;
+            }
+            applyFilters();
+        });
+    });
+
     // Rubric Selector Buttons
     document.querySelectorAll('.rubric-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -306,6 +322,74 @@ function setupEventListeners() {
 
     // Field Capture Form Submit
     $('field-form').addEventListener('submit', handleFieldFormSubmit);
+
+    // LMS Modal Listeners
+    const lmsModal = $('lms-modal');
+    if ($('lms-modal-btn')) {
+        $('lms-modal-btn').addEventListener('click', () => {
+            if (lmsModal) lmsModal.style.display = 'flex';
+        });
+    }
+    if ($('lms-close-btn')) {
+        $('lms-close-btn').addEventListener('click', () => {
+            if (lmsModal) lmsModal.style.display = 'none';
+        });
+    }
+    if ($('lms-sample-btn')) {
+        $('lms-sample-btn').addEventListener('click', () => {
+            const platform = $('lms-platform-select').value;
+            if (platform === 'generic') {
+                $('lms-csv-input').value = `student_name,date,attendance_status\nStudent False_Baseline_Positive 1831,2026-09-30,present\nStudent Consistent_Engaged 2741,2026-09-30,present`;
+            } else {
+                $('lms-csv-input').value = `student_name,score,max_score,assessment_type\nStudent False_Baseline_Positive 1831,88,100,practical_exam\nStudent Consistent_Engaged 2741,94,100,practical_exam`;
+            }
+        });
+    }
+    if ($('lms-submit-btn')) {
+        $('lms-submit-btn').addEventListener('click', async () => {
+            const csvData = $('lms-csv-input').value.trim();
+            const platform = $('lms-platform-select').value;
+            const statusDiv = $('lms-status-msg');
+            if (!csvData) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = 'rgba(239, 68, 68, 0.2)';
+                statusDiv.style.color = '#f87171';
+                statusDiv.textContent = 'Please enter or paste CSV records.';
+                return;
+            }
+
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = 'rgba(59, 130, 246, 0.2)';
+            statusDiv.style.color = '#93c5fd';
+            statusDiv.textContent = 'Ingesting records...';
+
+            try {
+                const res = await fetch('/api/lms/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/csv' },
+                    body: csvData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    statusDiv.style.background = 'rgba(16, 185, 129, 0.2)';
+                    statusDiv.style.color = '#6ee7b7';
+                    statusDiv.textContent = `✔ ${data.message}`;
+                    await fetchStudents();
+                    await fetchMetrics();
+                    renderApp();
+                    setTimeout(() => { if (lmsModal) lmsModal.style.display = 'none'; }, 2000);
+                } else {
+                    statusDiv.style.background = 'rgba(239, 68, 68, 0.2)';
+                    statusDiv.style.color = '#f87171';
+                    statusDiv.textContent = `Error: ${data.error || 'Failed to ingest records'}`;
+                }
+            } catch (err) {
+                statusDiv.style.background = 'rgba(239, 68, 68, 0.2)';
+                statusDiv.style.color = '#f87171';
+                statusDiv.textContent = `Network error: ${err.message}`;
+            }
+        });
+    }
 }
 
 // -------------------------------------------------------------
@@ -403,8 +487,19 @@ function renderTabContent() {
     }
 }
 
+function getTradeInitials(trade) {
+    if (!trade) return 'VO';
+    const t = trade.toLowerCase();
+    if (t.includes('elect')) return 'EL';
+    if (t.includes('weld')) return 'WE';
+    if (t.includes('auto')) return 'AU';
+    if (t.includes('it') || t.includes('hard')) return 'IT';
+    return trade.substring(0, 2).toUpperCase();
+}
+
 function renderMetrics(m) {
-    $('metric-total-num').textContent = m.totalStudents;
+    const total = (m && m.totalStudents) ? m.totalStudents : state.students.length;
+    if ($('metric-total-num')) $('metric-total-num').textContent = total;
     
     // Count risk bands
     let needsSupport = 0, watch = 0, steady = 0;
@@ -414,10 +509,37 @@ function renderMetrics(m) {
         else steady++;
     });
 
-    $('metric-needs-support-num').textContent = needsSupport;
-    $('metric-watch-num').textContent = watch;
-    $('metric-steady-num').textContent = steady;
-    $('metric-recall-num').textContent = `+${m.recallDelta}%`;
+    if ($('metric-needs-support-num')) $('metric-needs-support-num').textContent = needsSupport;
+    if ($('metric-watch-num')) $('metric-watch-num').textContent = watch;
+    if ($('metric-steady-num')) $('metric-steady-num').textContent = steady;
+
+    const denom = total || 1;
+    const supPct = Math.round((needsSupport / denom) * 100);
+    const watPct = Math.round((watch / denom) * 100);
+    const stePct = Math.max(0, 100 - supPct - watPct);
+
+    if ($('metric-needs-support-pct')) $('metric-needs-support-pct').textContent = `${supPct}% of cohort`;
+    if ($('metric-watch-pct')) $('metric-watch-pct').textContent = `${watPct}% of cohort`;
+    if ($('metric-steady-pct')) $('metric-steady-pct').textContent = `${stePct}% of cohort`;
+
+    // Proportional distribution progress segments
+    if ($('dist-bar-support')) $('dist-bar-support').style.width = `${needsSupport > 0 ? Math.max(2, supPct) : 0}%`;
+    if ($('dist-bar-watch')) $('dist-bar-watch').style.width = `${watch > 0 ? Math.max(2, watPct) : 0}%`;
+    if ($('dist-bar-steady')) $('dist-bar-steady').style.width = `${steady > 0 ? Math.max(2, stePct) : 0}%`;
+
+    if ($('dist-pct-support')) $('dist-pct-support').textContent = `${supPct}%`;
+    if ($('dist-pct-watch')) $('dist-pct-watch').textContent = `${watPct}%`;
+    if ($('dist-pct-steady')) $('dist-pct-steady').textContent = `${stePct}%`;
+
+    // Update risk filter chips counts
+    const chips = document.querySelectorAll('.risk-chip');
+    chips.forEach(chip => {
+        const r = chip.dataset.risk;
+        if (r === 'all') chip.textContent = `All (${total})`;
+        else if (r === 'needs support') chip.textContent = `⚠️ Needs Support (${needsSupport})`;
+        else if (r === 'watch') chip.textContent = `👁️ Watch (${watch})`;
+        else if (r === 'steady') chip.textContent = `✅ Steady (${steady})`;
+    });
 }
 
 function renderStudentTable() {
@@ -425,7 +547,7 @@ function renderStudentTable() {
     tbody.innerHTML = '';
 
     if (state.filteredStudents.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 2rem; color: var(--text-muted);">No matching students found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 3rem; color: var(--text-muted); font-size: 0.95rem;">🔍 No students match the active search or filter criteria.</td></tr>`;
         return;
     }
 
@@ -453,43 +575,73 @@ function renderStudentTable() {
 
         // Multi-signal points
         const pts = s.points || { attendance: 0, practicals: 0, assessments: 0, feedback: 0, help_seeking: 0 };
-        const pill = (val, label) => {
+        const pill = (val, label, shortLabel) => {
             const cls = val > 0 ? 'pill-pos' : (val < 0 ? 'pill-neg' : 'pill-zero');
             const sign = val > 0 ? `+${val}` : `${val}`;
-            return `<span class="signal-pill ${cls}" title="${label}">${label[0]}:${sign}</span>`;
+            return `<span class="signal-pill ${cls}" title="${label}: ${sign}">${shortLabel}: ${sign}</span>`;
         };
 
+        // Attendance meter
+        const attPct = s.stats ? s.stats.attendancePercent : 0;
+        const attFillClass = attPct >= 90 ? 'fill-steady' : (attPct >= 75 ? 'fill-watch' : 'fill-support');
+
+        // Exam meter
+        const examPct = s.stats ? s.stats.examAverage : 0;
+        const examFillClass = examPct >= 75 ? 'fill-steady' : (examPct >= 60 ? 'fill-watch' : 'fill-support');
+
         // Human review indicator
-        let reviewBadge = `<span style="color:var(--text-muted); font-size:0.75rem;">Unreviewed</span>`;
+        let reviewBadge = `<span style="color:var(--text-muted); font-size:0.75rem; font-weight:500;">Unreviewed</span>`;
         if (s.humanReview && s.humanReview.status === 'confirmed') {
-            reviewBadge = `<span style="color:#6ee7b7; font-weight:600; font-size:0.75rem;">✔ Confirmed</span>`;
+            reviewBadge = `<span style="color:#6ee7b7; font-weight:700; font-size:0.75rem; background:rgba(16,185,129,0.15); padding:0.2rem 0.5rem; border-radius:4px; border:1px solid rgba(16,185,129,0.3);">✔ Confirmed</span>`;
         } else if (s.humanReview && s.humanReview.status === 'false_positive') {
-            reviewBadge = `<span style="color:#fcd34d; font-weight:600; font-size:0.75rem;">✖ False Pos</span>`;
+            reviewBadge = `<span style="color:#fcd34d; font-weight:700; font-size:0.75rem; background:rgba(245,158,11,0.15); padding:0.2rem 0.5rem; border-radius:4px; border:1px solid rgba(245,158,11,0.3);">✖ False Pos</span>`;
         } else if (s.humanReview && s.humanReview.status === 'false_negative') {
-            reviewBadge = `<span style="color:#fca5a5; font-weight:600; font-size:0.75rem;">✖ False Neg</span>`;
+            reviewBadge = `<span style="color:#fca5a5; font-weight:700; font-size:0.75rem; background:rgba(239,68,68,0.15); padding:0.2rem 0.5rem; border-radius:4px; border:1px solid rgba(239,68,68,0.3);">✖ False Neg</span>`;
         }
+
+        const initials = getTradeInitials(s.cohort_trade);
 
         tr.innerHTML = `
             <td>
-                <strong>${s.name}</strong>
-                <div style="font-size:0.75rem; color:var(--text-muted);">${s.cohort_trade.toUpperCase()}</div>
+                <div class="student-cell">
+                    <div class="student-avatar" title="${s.cohort_trade.toUpperCase()}">${initials}</div>
+                    <div class="student-meta">
+                        <span class="student-name">${s.name}</span>
+                        <span class="trade-pill">${s.cohort_trade.toUpperCase()}</span>
+                    </div>
+                </div>
             </td>
-            <td><strong>${s.stats ? s.stats.attendancePercent : 0}%</strong></td>
             <td>
-                <span style="font-size:0.8rem;">
-                    Prof: <strong>${s.stats ? s.stats.practicalsProficient : 0}</strong> | Dev: <strong style="color:${s.stats && s.stats.practicalsDeveloping > 0 ? '#fca5a5':'inherit'}">${s.stats ? s.stats.practicalsDeveloping : 0}</strong>
-                </span>
+                <div class="metric-cell">
+                    <span class="metric-val">${attPct}%</span>
+                    <div class="meter-track">
+                        <div class="meter-fill ${attFillClass}" style="width: ${Math.min(100, attPct)}%;"></div>
+                    </div>
+                </div>
             </td>
             <td>
-                <strong>${s.stats ? s.stats.examAverage : 0}%</strong>
-                ${s.stats && s.stats.singleBadDaySmoothed ? '<span title="Single bad day smoothed" style="font-size:0.7rem; color:#fcd34d;">(Smoothed)</span>' : ''}
+                <div style="display:flex; gap:0.35rem; align-items:center;">
+                    <span class="signal-pill pill-pos" title="Competent/Proficient observations">Prof: ${s.stats ? s.stats.practicalsProficient : 0}</span>
+                    <span class="signal-pill ${s.stats && s.stats.practicalsDeveloping > 0 ? 'pill-neg' : 'pill-zero'}" title="Developing observations">Dev: ${s.stats ? s.stats.practicalsDeveloping : 0}</span>
+                </div>
+            </td>
+            <td>
+                <div class="metric-cell">
+                    <div style="display:flex; align-items:center;">
+                        <span class="metric-val">${examPct}%</span>
+                        ${s.stats && s.stats.singleBadDaySmoothed ? '<span class="badge-smoothed" title="Single bad day anomaly smoothed">Smoothed</span>' : ''}
+                    </div>
+                    <div class="meter-track">
+                        <div class="meter-fill ${examFillClass}" style="width: ${Math.min(100, examPct)}%;"></div>
+                    </div>
+                </div>
             </td>
             <td>
                 <div class="signal-pill-group">
-                    ${pill(pts.attendance, 'Attendance')}
-                    ${pill(pts.practicals, 'Practicals')}
-                    ${pill(pts.assessments, 'Exams')}
-                    ${pill(pts.feedback, 'Feedback')}
+                    ${pill(pts.attendance, 'Attendance', 'Att')}
+                    ${pill(pts.practicals, 'Practicals', 'Prac')}
+                    ${pill(pts.assessments, 'Exams', 'Exam')}
+                    ${pill(pts.feedback, 'Feedback', 'Feed')}
                 </div>
             </td>
             <td>
@@ -500,13 +652,13 @@ function renderStudentTable() {
             <td><span class="conf-badge ${confClass}">${confText}</span></td>
             <td>${reviewBadge}</td>
             <td>
-                <button class="btn-outline inspect-btn" data-id="${s.id}">
+                <button class="btn-inspect" data-id="${s.id}">
                     🔍 ${t('inspectBtn')}
                 </button>
             </td>
         `;
 
-        tr.querySelector('.inspect-btn').addEventListener('click', () => openStudentDrawer(s.id));
+        tr.querySelector('.btn-inspect').addEventListener('click', () => openStudentDrawer(s.id));
         tbody.appendChild(tr);
     });
 }
@@ -835,15 +987,21 @@ function applyTranslations() {
     $('tab-comp-text').textContent = t('tabComparison');
 
     // Metrics labels
-    $('metric-total-label').textContent = t('metricTotal');
-    $('metric-needs-support-label').textContent = t('metricNeedsSupport');
-    $('metric-watch-label').textContent = t('metricWatch');
-    $('metric-steady-label').textContent = t('metricSteady');
-    $('metric-conflicts-label').textContent = t('metricConflicts');
-    $('metric-recall-label').textContent = t('metricRecallGain');
+    if ($('metric-total-label')) $('metric-total-label').textContent = t('metricTotal');
+    if ($('metric-needs-support-label')) $('metric-needs-support-label').textContent = t('metricNeedsSupport');
+    if ($('metric-watch-label')) $('metric-watch-label').textContent = t('metricWatch');
+    if ($('metric-steady-label')) $('metric-steady-label').textContent = t('metricSteady');
+    if ($('metric-conflicts-label')) $('metric-conflicts-label').textContent = t('metricConflicts');
+    if ($('metric-recall-label')) $('metric-recall-label').textContent = t('metricRecallGain');
+    if ($('dist-title-text')) $('dist-title-text').textContent = t('distTitle') || 'Cohort Risk Distribution';
+    if ($('legend-support-text')) $('legend-support-text').textContent = t('metricNeedsSupport');
+    if ($('legend-watch-text')) $('legend-watch-text').textContent = t('metricWatch');
+    if ($('legend-steady-text')) $('legend-steady-text').textContent = t('metricSteady');
 
-    // Search & Filter
+    // Search & Filter & Actions
     $('search-input').placeholder = t('searchPlaceholder');
+    if ($('export-csv-text')) $('export-csv-text').textContent = t('exportCsv');
+    if ($('lms-import-text')) $('lms-import-text').textContent = t('lmsIngestion');
 
     // Field capture labels
     $('field-title').textContent = t('fieldTitle');
